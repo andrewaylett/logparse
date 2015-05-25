@@ -22,8 +22,8 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Main log-parsing class.  Puts everything together and runs it.
@@ -33,20 +33,21 @@ public class LogParse {
 
     public static void main(String args[]) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        Consumer<LineDetails> logConsumer = new LogConsumer();
+        LogConsumer logConsumer = new LogConsumer();
         while (true) {
             String logLine = in.readLine();
             if (logLine == null) {
                 // Done
-                return;
+                break;
             }
             Optional<LineDetails> details = LineDetails.parseLogLine(logLine);
             if (details.isPresent()) {
                 logConsumer.accept(details.get());
-            } else {
-                LOG.error("Didn't get a line back, quitting");
-                return;
             }
+            // Continue if we don't get a line: the parser will log why.
+        }
+        try (OutputStreamWriter writer = new OutputStreamWriter(System.out)) {
+            logConsumer.generateOutput(writer);
         }
     }
 
