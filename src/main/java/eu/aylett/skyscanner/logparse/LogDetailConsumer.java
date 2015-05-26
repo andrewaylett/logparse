@@ -16,7 +16,7 @@
 
 package eu.aylett.skyscanner.logparse;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -25,9 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
@@ -55,20 +54,21 @@ public class LogDetailConsumer implements Consumer<LineDetails> {
         }
     }
 
-    public void generateOutput(Writer w, ObjectMapper mapper) throws IOException {
-        w.write(mapper.writeValueAsString(new TreeMap<>(minutes.asMap())));
+    @JsonProperty
+    public SortedMap<DateTime, LogMinuteAggregator> detail() throws IOException {
+        return new TreeMap<>(minutes.asMap());
     }
 
-    public void generateAggregateOutput(OutputStreamWriter writer, ObjectMapper mapper) throws IOException {
+    @JsonProperty
+    public LogGlobalAggregator aggregate() throws IOException {
         Set<DateTime> times = minutes.asMap().keySet();
         if (times.isEmpty()) {
-            writer.write("No data\n");
-            return;
+            return null;
         }
 
         LogGlobalAggregator aggregator = new LogGlobalAggregator();
         minutes.asMap().values().forEach(aggregator::accept);
 
-        writer.write(mapper.writeValueAsString(aggregator));
+        return aggregator;
     }
 }

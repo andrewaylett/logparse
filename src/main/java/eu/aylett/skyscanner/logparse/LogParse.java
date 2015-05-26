@@ -128,11 +128,12 @@ public class LogParse {
             }
         }
         try (OutputStreamWriter writer = new OutputStreamWriter(System.out)) {
-            if (detail) {
-                logDetailConsumer.generateOutput(writer, mapper);
-            }
-            if (aggregate) {
-                logDetailConsumer.generateAggregateOutput(writer, mapper);
+            if (detail && aggregate) {
+                mapper.writeValue(writer, logDetailConsumer);
+            } else if (detail) {
+                mapper.writeValue(writer, logDetailConsumer.detail());
+            } else if (aggregate) {
+                mapper.writeValue(writer, logDetailConsumer.aggregate());
             }
         }
     }
