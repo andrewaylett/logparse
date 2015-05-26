@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.logging.Logger.GLOBAL_LOGGER_NAME;
+import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 
 /**
  * Main log-parsing class.  Puts everything together and runs it.
@@ -81,11 +81,16 @@ public class LogParse {
         // Set up logging
         Level loggerLevel = verbose ? Level.DEBUG : Level.ERROR;
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
-        loggerContext.getLogger(GLOBAL_LOGGER_NAME).setLevel(loggerLevel);
+        loggerContext.getLogger(ROOT_LOGGER_NAME).setLevel(loggerLevel);
 
         LOG.debug("Verbose: {}", verbose);
         LOG.debug("Detail: {}", detail);
         LOG.debug("Aggregate: {}", aggregate);
+
+        if (inputs.isEmpty()) {
+            LOG.info("No files given: using std input");
+            inputs.add(new BufferedReader(new InputStreamReader(System.in)));
+        }
 
         if (!(detail || aggregate)) {
             LOG.error("No detail or aggregate makes no output");
@@ -103,6 +108,7 @@ public class LogParse {
                 String logLine = in.readLine();
                 if (logLine == null) {
                     // Done
+                    in.close();
                     break;
                 }
                 if (logLine.trim().isEmpty()) {
@@ -110,9 +116,7 @@ public class LogParse {
                 }
                 Optional<LineDetails> details = LineDetails.parseLogLine(logLine);
                 if (details.isPresent()) {
-                    if (detail) {
-                        logDetailConsumer.accept(details.get());
-                    }
+                    logDetailConsumer.accept(details.get());
                 }
                 // Continue if we don't get a line: the parser will log why.
             }
@@ -122,7 +126,7 @@ public class LogParse {
                 logDetailConsumer.generateOutput(writer);
             }
             if (aggregate) {
-                LOG.warn("Aggregate output not implemented yet");
+                logDetailConsumer.generateAggregateOutput(writer);
             }
         }
     }

@@ -63,4 +63,24 @@ public class LogAggregator implements Consumer<LineDetails> {
         return String.format("%s:\n  successful: %d\n  failed: %d\n  meanResponseTime: %d\n  mbSent: %f",
                 minute, successful, failures, time/count, (double)bytes/(1024*1024));
     }
+
+    public long getSuccessful() {
+        return successful;
+    }
+
+    public long getFailures() {
+        return failures;
+    }
+
+    public long getCount() {
+        return count;
+    }
+
+    public long getBytes() {
+        return bytes;
+    }
+
+    public long getTime() {
+        return time;
+    }
 }
