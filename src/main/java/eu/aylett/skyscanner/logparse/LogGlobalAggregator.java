@@ -55,13 +55,13 @@ public class LogGlobalAggregator implements Consumer<LogMinuteAggregator> {
     }
 
     @JsonProperty
-    public double getSuccessfulPerMinute() {
-        return (double)totalSuccessful/getDurationInMinutes();
+    public long getDurationInMinutes() {
+        return new Duration(earliest, latest.plus(Duration.standardMinutes(1))).getStandardMinutes();
     }
 
     @JsonProperty
-    private long getDurationInMinutes() {
-        return new Duration(earliest, latest.plus(Duration.standardMinutes(1))).getStandardMinutes();
+    public double getSuccessfulPerMinute() {
+        return (double)totalSuccessful/getDurationInMinutes();
     }
 
     @JsonProperty

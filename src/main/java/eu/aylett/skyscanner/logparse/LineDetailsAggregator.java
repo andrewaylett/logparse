@@ -24,7 +24,6 @@ import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -56,12 +55,12 @@ public class LineDetailsAggregator implements Consumer<LineDetails> {
     }
 
     @JsonProperty
-    public SortedMap<DateTime, LogMinuteAggregator> detail() throws IOException {
+    public SortedMap<DateTime, LogMinuteAggregator> detail() {
         return new TreeMap<>(minutes.asMap());
     }
 
     @JsonProperty
-    public LogGlobalAggregator aggregate() throws IOException {
+    public LogGlobalAggregator aggregate() {
         Set<DateTime> times = minutes.asMap().keySet();
         if (times.isEmpty()) {
             return null;
