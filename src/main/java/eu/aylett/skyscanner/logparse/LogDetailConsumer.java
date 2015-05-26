@@ -35,8 +35,8 @@ import static com.google.common.collect.Lists.newArrayList;
 /**
  * Collects {@link LineDetails}, feeding them onwards when we have a minute's worth.
  */
-public class LogConsumer implements Consumer<LineDetails> {
-    private static final Logger LOG = LoggerFactory.getLogger(LogConsumer.class);
+public class LogDetailConsumer implements Consumer<LineDetails> {
+    private static final Logger LOG = LoggerFactory.getLogger(LogDetailConsumer.class);
 
     LoadingCache<DateTime, LogAggregator> minutes = CacheBuilder.newBuilder().build(new CacheLoader<DateTime, LogAggregator>() {
         @Override
