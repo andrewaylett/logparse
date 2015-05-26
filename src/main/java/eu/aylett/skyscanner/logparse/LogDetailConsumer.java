@@ -32,7 +32,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 /**
- * Collects {@link LineDetails}, feeding them onwards when we have a minute's worth.
+ * Collects {@link LineDetails}, aggregating them into minutes and allowing for
+ * global aggregation too.
  */
 public class LogDetailConsumer implements Consumer<LineDetails> {
     private static final Logger LOG = LoggerFactory.getLogger(LogDetailConsumer.class);
