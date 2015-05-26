@@ -18,6 +18,8 @@ package eu.aylett.skyscanner.logparse;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,11 +43,13 @@ public class LogParse {
     private final boolean aggregate;
     private final boolean detail;
     private final List<BufferedReader> inputs;
+    private final ObjectMapper mapper;
 
-    public LogParse(boolean aggregate, boolean detail, List<BufferedReader> inputs) {
+    public LogParse(boolean aggregate, boolean detail, List<BufferedReader> inputs, ObjectMapper mapper) {
         this.aggregate = aggregate;
         this.detail = detail;
         this.inputs = inputs;
+        this.mapper = mapper;
     }
 
     public static void main(String args[]) throws IOException {
@@ -97,7 +101,9 @@ public class LogParse {
             return;
         }
 
-        LogParse app = new LogParse(aggregate, detail, inputs);
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+
+        LogParse app = new LogParse(aggregate, detail, inputs, mapper);
         app.run();
     }
 
@@ -123,10 +129,10 @@ public class LogParse {
         }
         try (OutputStreamWriter writer = new OutputStreamWriter(System.out)) {
             if (detail) {
-                logDetailConsumer.generateOutput(writer);
+                logDetailConsumer.generateOutput(writer, mapper);
             }
             if (aggregate) {
-                logDetailConsumer.generateAggregateOutput(writer);
+                logDetailConsumer.generateAggregateOutput(writer, mapper);
             }
         }
     }

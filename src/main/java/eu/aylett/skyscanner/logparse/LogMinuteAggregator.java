@@ -16,6 +16,8 @@
 
 package eu.aylett.skyscanner.logparse;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Preconditions;
 import org.joda.time.DateTime;
 
@@ -24,7 +26,7 @@ import java.util.function.Consumer;
 /**
  * Takes a collection of {@link LineDetails} and aggregates their stats.
  */
-public class LogAggregator implements Consumer<LineDetails> {
+public class LogMinuteAggregator implements Consumer<LineDetails> {
     private final DateTime minute;
     private long count;
     private long bytes;
@@ -32,7 +34,7 @@ public class LogAggregator implements Consumer<LineDetails> {
     private long successful;
     private long failures;
 
-    public LogAggregator(DateTime minute) {
+    public LogMinuteAggregator(DateTime minute) {
         this.minute = minute;
         count = 0;
         bytes = 0;
@@ -59,28 +61,43 @@ public class LogAggregator implements Consumer<LineDetails> {
         }
     }
 
-    public String resultString() {
-        return String.format("%s:\n  successful: %d\n  failed: %d\n  meanResponseTime: %d\n  mbSent: %f",
-                minute, successful, failures, time/count, (double)bytes/(1024*1024));
-    }
-
+    @JsonProperty
     public long getSuccessful() {
         return successful;
     }
 
+    @JsonProperty
     public long getFailures() {
         return failures;
     }
 
+    @JsonIgnore
     public long getCount() {
         return count;
     }
 
+    @JsonIgnore
     public long getBytes() {
         return bytes;
     }
 
+    @JsonIgnore
     public long getTime() {
         return time;
+    }
+
+    @JsonProperty
+    public long getMeanResponseTime() {
+        return time/count;
+    }
+
+    @JsonProperty
+    public double getMbSent() {
+        return (double)bytes/(1024*1024);
+    }
+
+    @JsonIgnore
+    public DateTime getMinute() {
+        return minute;
     }
 }

@@ -16,25 +16,21 @@
 
 package eu.aylett.skyscanner.logparse;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.joda.time.DateTime;
-import org.joda.time.Duration;
-import org.joda.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * Collects {@link LineDetails}, feeding them onwards when we have a minute's worth.
@@ -42,10 +38,10 @@ import static com.google.common.collect.Lists.newArrayList;
 public class LogDetailConsumer implements Consumer<LineDetails> {
     private static final Logger LOG = LoggerFactory.getLogger(LogDetailConsumer.class);
 
-    LoadingCache<DateTime, LogAggregator> minutes = CacheBuilder.newBuilder().build(new CacheLoader<DateTime, LogAggregator>() {
+    LoadingCache<DateTime, LogMinuteAggregator> minutes = CacheBuilder.newBuilder().build(new CacheLoader<DateTime, LogMinuteAggregator>() {
         @Override
-        public LogAggregator load(DateTime key) throws Exception {
-            return new LogAggregator(key);
+        public LogMinuteAggregator load(DateTime key) throws Exception {
+            return new LogMinuteAggregator(key);
         }
     });
 
@@ -59,56 +55,20 @@ public class LogDetailConsumer implements Consumer<LineDetails> {
         }
     }
 
-    public void generateOutput(Writer w) throws IOException {
-        List<Map.Entry<DateTime, LogAggregator>> entries = newArrayList(minutes.asMap().entrySet());
-        entries.sort((a, b) -> a.getKey().compareTo(b.getKey()));
-        for (Map.Entry<DateTime, LogAggregator> e : entries) {
-            w.write(e.getValue().resultString());
-            w.write('\n');
-        }
+    public void generateOutput(Writer w, ObjectMapper mapper) throws IOException {
+        w.write(mapper.writeValueAsString(new TreeMap<>(minutes.asMap())));
     }
 
-    public void generateAggregateOutput(OutputStreamWriter writer) throws IOException {
+    public void generateAggregateOutput(OutputStreamWriter writer, ObjectMapper mapper) throws IOException {
         Set<DateTime> times = minutes.asMap().keySet();
         if (times.isEmpty()) {
             writer.write("No data\n");
             return;
         }
-        Instant earliest, latest;
-        earliest = latest = times.iterator().next().toInstant();
 
-        for (DateTime dt: times) {
-            Instant i = dt.toInstant();
-            if (earliest.compareTo(dt) > 0) {
-                earliest = i;
-            }
-            if (latest.compareTo(dt) < 0) {
-                latest = i;
-            }
-        }
+        LogGlobalAggregator aggregator = new LogGlobalAggregator();
+        minutes.asMap().values().forEach(aggregator::accept);
 
-        Duration duration = new Duration(earliest, latest.plus(Duration.standardMinutes(1)));
-        long durationInMinutes = duration.getStandardMinutes();
-
-        long totalSuccessful = 0;
-        long totalFailures = 0;
-        long totalTime = 0;
-        long totalBytes = 0;
-        long totalCount = 0;
-        for (LogAggregator minuteAggregation : minutes.asMap().values()) {
-            totalSuccessful += minuteAggregation.getSuccessful();
-            totalFailures += minuteAggregation.getFailures();
-            totalTime += minuteAggregation.getTime();
-            totalBytes += minuteAggregation.getBytes();
-            totalCount += minuteAggregation.getCount();
-        }
-
-        writer.write(String.format("Aggregate over %d minutes:\n  successful: %f/min\n  failed: %f/min\n  meanResponseTime: %d us\n  meanTimeEachMinuteSpentResponding: %d us\n  mbSent: %f/min\n",
-                durationInMinutes,
-                (double) totalSuccessful/durationInMinutes,
-                (double) totalFailures/durationInMinutes,
-                totalTime/totalCount,
-                totalTime/durationInMinutes,
-                (double) totalBytes/(1024*1024*durationInMinutes)));
+        writer.write(mapper.writeValueAsString(aggregator));
     }
 }
