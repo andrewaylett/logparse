@@ -23,7 +23,8 @@ import org.joda.time.Instant;
 import java.util.function.Consumer;
 
 /**
- * Takes a collection of {@link eu.aylett.skyscanner.logparse.LineDetails} and aggregates their stats.
+ * When fed {@link LogMinuteAggregator} instances, can output global aggregated
+ * statistics.
  */
 public class LogGlobalAggregator implements Consumer<LogMinuteAggregator> {
 

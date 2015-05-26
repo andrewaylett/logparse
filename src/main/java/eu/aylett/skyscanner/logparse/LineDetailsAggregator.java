@@ -35,8 +35,8 @@ import java.util.function.Consumer;
  * Collects {@link LineDetails}, aggregating them into minutes and allowing for
  * global aggregation too.
  */
-public class LogDetailConsumer implements Consumer<LineDetails> {
-    private static final Logger LOG = LoggerFactory.getLogger(LogDetailConsumer.class);
+public class LineDetailsAggregator implements Consumer<LineDetails> {
+    private static final Logger LOG = LoggerFactory.getLogger(LineDetailsAggregator.class);
 
     LoadingCache<DateTime, LogMinuteAggregator> minutes = CacheBuilder.newBuilder().build(new CacheLoader<DateTime, LogMinuteAggregator>() {
         @Override

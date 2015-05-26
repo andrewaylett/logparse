@@ -24,6 +24,10 @@
     <artifactId>logparse</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
+    <properties>
+        <encoding>UTF-8</encoding>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.google.guava</groupId>

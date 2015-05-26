@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 public class LineDetails {
     private static final Logger LOG = LoggerFactory.getLogger(LineDetails.class);
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormat.forPattern("dd/MMM/yyyy:HH:mm:ss Z");
-    /**
+    /*
      * Pattern is "%a %l %u %t \"%r\" %>s %b %D” -- that is:
      *  * Address (ignored)
      *  * Logname (ignored)

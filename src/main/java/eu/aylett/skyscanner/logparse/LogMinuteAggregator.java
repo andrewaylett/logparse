@@ -24,7 +24,8 @@ import org.joda.time.DateTime;
 import java.util.function.Consumer;
 
 /**
- * Takes a collection of {@link LineDetails} and aggregates their stats.
+ * Takes a collection of {@link LineDetails} from a single minute and aggregates
+ * their stats.
  */
 public class LogMinuteAggregator implements Consumer<LineDetails> {
     private final DateTime minute;

@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
@@ -53,6 +54,9 @@ public class LogParse {
     }
 
     public static void main(String args[]) throws IOException {
+
+        // Read arguments
+
         boolean aggregate = true;
         boolean detail = true;
         boolean verbose = false;
@@ -77,7 +81,12 @@ public class LogParse {
                     System.out.println("StdIn can be represented by '-' or by not providing any files");
                     return;
                 default:
-                    inputs.add(Files.newBufferedReader(Paths.get(arg)));
+                    try {
+                        inputs.add(Files.newBufferedReader(Paths.get(arg)));
+                    } catch (NoSuchFileException e) {
+                        LOG.error("File \"{}\" does not exist.", arg);
+                        System.exit(1);
+                    }
                     break;
             }
         }
@@ -86,6 +95,8 @@ public class LogParse {
         Level loggerLevel = verbose ? Level.DEBUG : Level.ERROR;
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         loggerContext.getLogger(ROOT_LOGGER_NAME).setLevel(loggerLevel);
+
+        // Sanity Checks
 
         LOG.debug("Verbose: {}", verbose);
         LOG.debug("Detail: {}", detail);
@@ -98,7 +109,7 @@ public class LogParse {
 
         if (!(detail || aggregate)) {
             LOG.error("No detail or aggregate makes no output");
-            return;
+            System.exit(1);
         }
 
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -108,7 +119,12 @@ public class LogParse {
     }
 
     public void run() throws IOException {
-        LogDetailConsumer logDetailConsumer = new LogDetailConsumer();
+        LineDetailsAggregator lineDetailsAggregator = aggregateLogs();
+        writeYAML(lineDetailsAggregator);
+    }
+
+    private LineDetailsAggregator aggregateLogs() throws IOException {
+        LineDetailsAggregator lineDetailsAggregator = new LineDetailsAggregator();
         for (BufferedReader in: inputs) {
             while (true) {
                 String logLine = in.readLine();
@@ -122,18 +138,22 @@ public class LogParse {
                 }
                 Optional<LineDetails> details = LineDetails.parseLogLine(logLine);
                 if (details.isPresent()) {
-                    logDetailConsumer.accept(details.get());
+                    lineDetailsAggregator.accept(details.get());
                 }
                 // Continue if we don't get a line: the parser will log why.
             }
         }
+        return lineDetailsAggregator;
+    }
+
+    private void writeYAML(LineDetailsAggregator lineDetailsAggregator) throws IOException {
         try (OutputStreamWriter writer = new OutputStreamWriter(System.out)) {
             if (detail && aggregate) {
-                mapper.writeValue(writer, logDetailConsumer);
+                mapper.writeValue(writer, lineDetailsAggregator);
             } else if (detail) {
-                mapper.writeValue(writer, logDetailConsumer.detail());
+                mapper.writeValue(writer, lineDetailsAggregator.detail());
             } else if (aggregate) {
-                mapper.writeValue(writer, logDetailConsumer.aggregate());
+                mapper.writeValue(writer, lineDetailsAggregator.aggregate());
             }
         }
     }
